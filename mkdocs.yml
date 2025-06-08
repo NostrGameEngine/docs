@@ -1,0 +1,102 @@
+site_name: Nostr Game Engine | Docs
+site_url: https://ngengine.org/docs/
+site_description: Documentation for the Nostr Game Engine.
+site_author: Nostr Game Engine Team
+
+repo_url: https://github.com/NostrGameEngine/docs
+edit_uri: blob/master/
+
+theme:
+  name: material
+  palette: 
+      scheme: slate
+      primary: custom
+      accent: custom
+  font:
+    text: Oxanium
+  logo: https://ngengine.org/nge-nobg1024.webp
+  favicon: https://ngengine.org/images/favicon.png
+  user_color_mode_toggle: false
+  locale: en
+  features:
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate 
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - toc.follow
+    - navigation.expand
+
+nav:
+  - Overview: index.md
+  - Getting Started: getting-started.md
+  - Component System: components/index.md
+  - Authentication: auth.md
+  - Networking:
+    - Network Overview: network/index.md
+    - Lobbies & Discovery: network/lobby.md
+    - Messaging: network/messages.md
+    - Player Abstraction: network/player.md
+  - Types and Math:
+    - Math and Types Overview: math/index.md
+    - 3D Rotation in-Depth: math/3D-rotation.md
+    - Math Cheatsheet: math/math-cheatsheet.md
+  - Scene Graph: scene-graph.md
+  - Controls: controls.md
+  - Materials:
+    - Materials Overview: materials/index.md
+    - Setting Up a PBR Scene: materials/pbr.md
+  - Meshes: meshes.md
+  - Assets and 3D-models:  assets.md
+  - ViewPorts: viewports.md
+  - Camera: camera.md
+  - Lights:  lights.md
+  - Sky: sky.md  
+  - Animations: animations.md  
+  - Postprocessing: ./postprocessing.md
+  - Particles: particles.md
+  - Data Stores: datastore.md
+  - Graphical User Interface (GUI):
+    - NGE Simple UI: gui/index.md
+    - Lemur: gui/lemur.md
+  - Javadoc: https://javadoc.ngengine.org/
+  - jMonkeyEngine Wiki: https://wiki.jmonkeyengine.org
+
+extra_css:
+  - css/extra.css
+
+exclude_docs: |
+  *.py
+
+markdown_extensions:
+  - toc:
+      permalink: true
+
+  - attr_list
+  - def_list
+  - tables
+  - admonition
+  - pymdownx.highlight:
+      use_pygments: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - codehilite
+  - markdown_del_ins
+  
+copyright: "© 2025 Nostr Game Engine
+  <br><br>
+  This documentation is adapted from the <a target='_blank' href='https://wiki.jmonkeyengine.org'>jMonkeyEngine documentation</a>, as Nostr Game Engine is a fork of jMonkeyEngine.
+  <br>
+  © 2009–2025 jMonkeyEngine Team
+  "
+
+plugins:
+  - search
+
+ 
+watch:
+  - docs
+ 

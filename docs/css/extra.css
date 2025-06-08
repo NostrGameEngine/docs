@@ -1,0 +1,94 @@
+:root > * {
+    --dark-purple: #1B0629;
+    --medium-purple: #3E1E68;
+    --light-purple: #8357C5;
+    --accent-purple: #E75AFF;
+    --glow-purple: #C47AFF;
+    --glow-purpleA: rgba(195, 122, 255, 0.5);
+    --text-color: #E0D5FF;
+    --neon-blue: #00F0FF;
+    --neon-blueA: #00eeff65;
+    --neontoshi: #F7931A;   
+
+    --md-primary-fg-color: var(--medium-purple);
+    --md-primary-fg-color--light:var(--medium-purple);
+    --md-primary-fg-color--dark: var(--medium-purple);
+
+    --md-accent-fg-color: var(--light-purple);
+    --md-accent-fg-color--light: var(--light-purple);
+    --md-accent-fg-color--dark:var(--light-purple);
+    --md-default-bg-color: var(--dark-purple);
+
+}
+
+body {
+    background: radial-gradient(circle, rgb(22, 0, 29) 0%, rgba(12, 3, 29, 1) 100%);
+}
+
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg{
+    height: 4rem !important;
+    width: 4rem !important;
+}
+
+.md-grid {
+    max-width: 1800px;
+}
+
+.md-header .md-grid{
+    max-width: 100%;
+}
+
+.md-nav__title{
+    box-shadow: none!important;
+    background:none!important;
+    color: var(--accent-purple);
+}
+
+.md-nav__item .md-nav__link--active,
+.md-nav__item .md-nav__link--active code{
+    color: var(--glow-purple)!important;
+}
+
+.admonition{
+    border-color: var(--medium-purple)!important;
+    background-color: var(--dark-purple)!important;
+    color: var(--text0-purple)!important;
+}
+
+.md-typeset .admonition-title{
+    font-weight: bolder;
+    
+}
+
+.md-typeset a{
+    text-decoration: underline;
+}
+
+.md-typeset .admonition-title::before,
+.md-typeset .admonition-title::before
+{
+    background-color: var(--glow-purple)!important;
+}
+
+.md-typeset .tip>.admonition-title,
+.md-typeset .tip>summary,
+.md-typeset .note>.admonition-title,
+.md-typeset .note>summary {
+    background: var(--medium-purple)!important;
+}
+
+.md-typeset a,
+.md-typeset a:focus,
+.md-typeset a:hover {
+    color: var(--glow-purple)!important;
+}
+
+strong {
+    font-weight:bolder;
+}
+
+.md-typeset h1, .md-typeset h2,.md-typeset h3, .md-typeset h4, .md-typeset h5, .md-typeset h6 {
+    color: var(--accent-purple);
+}

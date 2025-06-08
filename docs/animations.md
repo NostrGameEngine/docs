@@ -1,0 +1,2 @@
+!!! note "Work in Progress"
+    Animations in jMonkeyEngine are powerful but complex. There is a planned wrapper for NGE that will greatly simplify the process of using animations from imported models, but for now refer to the jMonkeyEngine documentation on the "new animation system" [here](https://wiki.jmonkeyengine.org/docs/3.4/core/animation/animation_new.html).
