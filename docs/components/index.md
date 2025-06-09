@@ -28,7 +28,7 @@ public interface Component<T> {
 ## Fragments
 !!! abstract "See [Fragment Javadoc](https://javadoc.ngengine.org/org/ngengine/components/fragments/Fragment.html)"
 
-Fragments are interfaces that extend a component’s functionality. By implementing one or more fragment interfaces (e.g., `ViewPortFragment`, `LogicFragment`), a component signals which engine systems it needs. The manager detects these fragments and handles their lifecycle in a predefined order:
+Fragments are interfaces that extend a component’s functionality. By implementing one or more fragment interfaces (e.g., `MainViewPortFragment`, `LogicFragment`), a component signals which engine systems it needs. The manager detects these fragments and handles their lifecycle in a predefined order:
 
 1. **Initialization** (`receiveXXX` methods)  
 2. **Loading** (`loadXXX` methods)  

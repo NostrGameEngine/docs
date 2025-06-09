@@ -44,7 +44,7 @@ NGE follows many of the same paradigms as jMonkeyEngine 3 (jME3), so if you're a
 
 NGE modules use the following prefixes:
 
-- **jME3 Modules**: All original jMonkeyEngine 3 modules are re-published under the `jme-` prefix (for example, `jme-core`, `jme-graphics`, `jme-networking`).
+- **jME3 Modules**: All original jMonkeyEngine 3 modules are re-published under the `jme3-` prefix (for example, `jme3-core`, `jme3-lwjgl3`, `jme3-networking`).
 - **NGE Modules**: NGE-specific modules are published under the `nge-` prefix (for example, `nge-core`, `nge-auth`, `nge-network`).
 
 !!! Tip "You can mix and match `nge-` modules with any compatible jME3 release. However, for the latest bug fixes and cutting-edge features, we recommend using the latest NGE builds."

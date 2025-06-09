@@ -1,19 +1,19 @@
 Postprocessing in NGE is anything that happens after the scene has been rendered but before it is displayed on the screen. This includes effects like bloom, depth of field,  and more.
 
-Postprocessing effects can be attached to a viewport with a component that implements [ViewPortFragment](https://javadoc.ngengine.org/org/ngengine/components/fragments/ViewPortFragment.html)  and overrides the `loadViewPortFilterPostprocessor` method, from there you can add your desired postprocessing effects to the [FilterPostProcessor](https://javadoc.ngengine.org/com/jme3/post/FilterPostProcessor.html) instance that is passed preconfigured to the method.
+Postprocessing effects can be attached to a viewport with a component that implements [MainViewPortFragment](https://javadoc.ngengine.org/org/ngengine/components/fragments/MainViewPortFragment.html)  and overrides the `loadMainViewPortFilterPostprocessor` method, from there you can add your desired postprocessing effects to the [FilterPostProcessor](https://javadoc.ngengine.org/com/jme3/post/FilterPostProcessor.html) instance that is passed preconfigured to the method.
 
 !!! example
     ```java
-    public class MyPostProcessingComponent implements Component<Object>, ViewPortFragment {
+    public class MyPostProcessingComponent implements Component<Object>, MainViewPortFragment {
         @Override
-        public void loadViewPortFilterPostprocessor(AssetManager assetManager, FilterPostProcessor fpp){
+        public void loadMainViewPortFilterPostprocessor(AssetManager assetManager, FilterPostProcessor fpp){
             // add your postprocessing effects here
             // fpp.addFilter(new BloomFilter());
             // ....
         }
 
         @Override
-        public void updateViewPort(ViewPort viewPort,float tpf) {}
+        public void updateMainViewPort(ViewPort viewPort,float tpf) {}
     }
     ```
 

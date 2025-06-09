@@ -1,4 +1,70 @@
-Getting started with NGE is straightforward. Everything begins with a `NGEApplication`, which you instantiate via a static method:
+Nostr Game Engine is fully modular: you can pick and choose individual engine components from our [GitHub Package Registry](https://github.com/orgs/NostrGameEngine/packages?repo_name=ngengine) and include them in any Gradle project. 
+
+However, the quickest way to start development is with the app template, detailed below.
+
+## Bootstrapping with the App Template
+
+Getting started with a new Nostr Game Engine project is easy thanks to the preconfigured Gradle template. 
+
+You can obtain the template in two ways:
+
+- **Clone the repository**:
+
+  ```bash
+  git clone https://github.com/NostrGameEngine/nge-app-template.git
+  ```
+
+- **Download as ZIP**:
+
+  [Download the Template App](https://github.com/NostrGameEngine/nge-app-template/archive/refs/heads/master.zip){ .md-button }
+
+After downloading, extract the contents to your workspace and open the project in your favorite Java IDE.
+
+!!! tip
+    We recommend using [Visual Studio Code](https://code.visualstudio.com/), but any Java-compatible IDE will work. 
+
+
+### Test the demo app
+
+Before going further, you can try to launch the demo app to ensure everything is set up correctly.
+
+Open a terminal in the project root and run:
+
+```
+./gradlew run
+```
+or on Windows:
+
+```powershell
+gradlew.bat run
+```
+
+![Demo App Screenshot](./images/demo-app.png)
+
+### Configure Project Properties
+
+Edit the `gradle.properties` file in the project root to customize your application details:
+
+```properties
+version=0.1
+projectName=ngeapp
+mainClass=org.example.NGEAppMain
+copyright=Copyright (c) 2025
+```
+
+you can also change `ngeVersion` if you want to use a different version of the engine.
+
+### Next Steps
+
+The next sections will walk you through the core concepts that make up a Nostr Game Engine application. 
+You can start experimenting with the source code you've just downloaded, to see how things work.
+
+Whenever your application is ready, you can head over to the [Building and Distribution](./build.md) section to learn how to package your app for distribution.
+
+
+## NGEApplication
+
+Everything begins with a `NGEApplication`, which you instantiate via a static method:
 
 ```java
 Runnable appBuilder = NGEApplication.createApp(app -> {
