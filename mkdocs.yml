@@ -3,7 +3,7 @@ site_url: https://ngengine.org/docs/
 site_description: Documentation for the Nostr Game Engine.
 site_author: Nostr Game Engine Team
 
-repo_url: https://github.com/NostrGameEngine/docs
+repo_url: https://github.com/NostrGameEngine/ngengine
 edit_uri: blob/master/
 
 theme:
