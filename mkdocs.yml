@@ -63,6 +63,7 @@ nav:
     - Lemur: gui/lemur.md
   - Javadoc: https://javadoc.ngengine.org/
   - jMonkeyEngine Wiki: https://wiki.jmonkeyengine.org
+  - NIP Drafts: nip-drafts/index.md
 
 extra_css:
   - css/extra.css

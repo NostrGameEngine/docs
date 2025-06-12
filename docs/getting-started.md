@@ -1,4 +1,15 @@
-Nostr Game Engine is fully modular: you can pick and choose individual engine components from our [GitHub Package Registry](https://github.com/orgs/NostrGameEngine/packages?repo_name=ngengine) and include them in any Gradle project. 
+Nostr Game Engine is fully modular: you can pick and choose individual engine components from [Maven Central](https://central.sonatype.com/search?namespace=org.ngengine) and include them in any Gradle project. 
+
+!!! tip
+    You are going to need also this repository
+    ```groovy
+    repositories {
+        maven {
+            url = "https://maven.rblb.it/NostrGameEngine/libdatachannel-java"
+        }
+    }
+    ```
+    that holds a fork of libdatachannel-java used by the network module
 
 However, the quickest way to start development is with the app template, detailed below.
 

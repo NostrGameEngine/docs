@@ -133,7 +133,7 @@ A valid gamertag must:
    * **Name** (3–21 characters)
    * **Discriminator** (4 digits)
 2. Use only alphanumeric characters or underscores (`[A-Za-z0-9_]`) in the name.
-3. Match the discriminator to the first four characters of the user’s Bech32 key payload (characters 5–8 of the Nostr key).
+3. Match the discriminator to the first four characters of the user’s Bech32 public key payload (characters 5–8 of the Nostr public key).
 
 !!! example "Valid Gamertag"
     For key `npub1abcd1234…`, a valid gamertag could be `OstrichSlayer#1234`.
