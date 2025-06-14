@@ -218,6 +218,7 @@ This Action Event is used by the offerer to propose its ad space for a given bid
 * **invoice** (`required`): A BOLT11 invoice, BOLT12 offer, or LNURL address for payment.
 
 The tags must include:
+
 * **e**: The ID of the original bidding event this offer is responding to.
 * **p**: The pubkey of the advertiser who made the bid.
 
@@ -230,6 +231,7 @@ This Action Event is used by the advertiser to accept a specific offer. The encr
 * **type**: `accept_offer`
 
 The tags must include:
+
 * **e**: The ID of the original bidding event this offer is responding to.
 * **p**: The pubkey of the offerer who made the offer.
 
@@ -243,6 +245,7 @@ This Action Event is used by the advertiser to decline a specific offer. The enc
 * **message** (`required`): A string explaining the reason for rejection.
 
 The tags must include:
+
 * **e**: The ID of the original bidding event this offer is responding to.
 * **p**: The pubkey of the offerer who made the offer.
 
@@ -265,6 +268,7 @@ When the offerer has reason to believe the requested action has been successfull
 * **message** (`required`): A human‑readable explanation of why the action is considered complete (e.g., “Ad displayed to user”, “User clicked link”, “Purchase confirmed”). This explanation can be evaluated by a human or an automated reviewer to determine whether the action was successfully completed.
 
 The tags must include:
+
 * **e**: The ID of the original bidding event this payment request is related to.
 * **p**: The pubkey of the advertiser who made the bid.
 
@@ -282,6 +286,7 @@ Triggered when the advertiser processes a **Payment Request**. Upon receiving a 
 * If verification fails or payment cannot be executed, the advertiser should instead publish a **Payout Error** ActionEvent.
 
 The tags must include:
+
 * **e**: The ID of the original bidding event this payout is related to.
 * **p**: The pubkey of the offerer who made the offer.
 
@@ -299,6 +304,7 @@ Sent when the advertiser is unable to complete the payout. The encrypted `conten
 
 
 The tags must include:
+
 * **e**: The ID of the original bidding event this payout error is related to.
 * **p**: The pubkey of the offerer who made the offer.
 
