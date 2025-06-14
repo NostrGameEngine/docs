@@ -103,14 +103,15 @@ Specifies the content format of the ad payload. Supported types:
 
 #### Categories (`h`,`H`,`T`,`t`) `optional` `recommended`
 
-Organize ads into a hierarchical taxonomy for targeted filtering. Tiers:
+Organize ads into a hierarchical taxonomy for targeted filtering. 
+Tiers:
 
 * `h`: Tier 1 category
 * `H`: Tier 2 category
 * `T`: Tier 3 category
 * `t`: Tier 4 category
 
-Refer to the [Nostr Content Taxonomy](../nostr-content-taxonomy) [\[csv\]](nostr-content-taxonomy.csv) (adapted from IAB Content Taxonomy) for full list of categories.
+specify an id in the [Nostr Content Taxonomy](../nostr-content-taxonomy) [\[csv\]](nostr-content-taxonomy.csv) (adapted from IAB Content Taxonomy).
 
 
 #### Language (`l`) `optional`
