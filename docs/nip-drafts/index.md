@@ -1,2 +1,3 @@
 - [NIP-RTC](nip-RTC.md)
 - [NIP-GAMERTAG](nip-GAMERTAG.md)
+- [NIP-SDAN](nip-SDAN.md)
