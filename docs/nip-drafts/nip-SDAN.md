@@ -1,4 +1,4 @@
-## NOSTR Simple Decentralized Advertising Network (NOSTR‑SDAN)
+## NOSTR  Secure Decentralized Ads Network (NOSTR‑SDAN)
 
 `draft` `optional`  `author:riccardobl` 
 
@@ -16,12 +16,15 @@ Most digital products rely on data‑driven advertising. NOSTR‑SDAN brings thi
 
 # High Level Overview
 
-1. **Advertiser** publishes a **Bidding Event** (`kind:30100`) with ad description, bid parameters, and targeting.
-2. **Offerers** filter these events, then respond with an **Offer ActionEvent** (`kind:30101`, `type=offer`) containing a payment invoice.
-3. **Advertiser** reviews offers and sends **Accept** or **Reject** **ActionEvents** (`type=accept_offer` or `type=reject_offer`).
-4. Upon acceptance, **Offerer** displays the ad; once the user action completes, sends a **Payment Request** (`type=payment_request`).
-5. **Advertiser** pays and emits either a **Payout** (`type=payout`) or **Payout Error** (`type=payout_error`).
-6. Parties may impose NIP‑13 PoW challenges (`difficulty` field) to deter cheating.
+1. **Advertiser** publishes a **Bidding** event (`kind:30100`) with ad description, bid parameters, and targeting.
+2. **Offerers** filter these events, then respond with an **Offer** negotiation event (`kind:30101`, `type=offer`) containing a payout invoice.
+3. **Advertiser** reviews offers and sends an **Accept offer** negotiation event (`kind:30101`, `type=accept_offer`).
+4. Upon acceptance, **Offerer** displays the ad; once the user action completes, sends a **Payment Request** negotiation event (`kind:30101`, `type=payment_request`).
+5. **Advertiser** pays and emits a **Payout** (`type=payout`), optionally including a refund invoice and the preimage as proof of payment.
+6. Either party can **Bail** (`kind:30101`, `type=bail`) at any point with an explanation, optionally providing the preimage of the refund payment.
+7. Parties may impose NIP-13 PoW challenges (`difficulty` field) to deter cheating.
+8. For conversion tracking, advertisers can include a `$OFFER_ID` placeholder in destination links.
+
 
 ---
 
@@ -46,24 +49,28 @@ A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
     "description": "<product description>", 
     "context": "<product context in natural language for semantic search>",
     "payload": "<link or text for the ad>",
-    "size": [<width>, <height>],
     "link": "<link to open when the ad is interacted with>",
     "call_to_action": "<text for the call to action>",
-    "bid": "<amount in msats to pay per action>",
-    "hold_time": "<time in seconds>",
+    "bid": <amount in msats to pay per action>,
+    "hold_time": <time in seconds>
   }),
   "tags": [
     ["k", "<action type>"],
     ["m", "<mime/type>"],
-    ["h", "<tier1 category>"],
-    ["H", "<tier2 category>"],
-    ["T", "<tier3 category>"],
-    ["t", "<tier4 category>"],
+    ["t", "<category>"],
+    // ["t", "<category2>"],
     ["l", "<language>"],
-    ["p", "<target>", "<target>", ...],
+    // ["l", "<language2>"],
+    // ["p", "<offerer_pubkey>"],
+    // ["p", "<offerer2_pubkey>"],
+    // ["p", "<offerer3_pubkey...>"],
+    ["y", "<app_pubkey>"],
+    // ["y", "<app2_pubkey...>"],
     ["d", "<ad id>"]
-    ["f", "<slot bid>"],
-    ["s", "<slot size>"],
+    ["f", "<price slot>"],
+    ["s", "<size>"],
+    ["S", "<aspect ratio>"],
+    ["delegation", "<delegation pubkey>"],
     ["expiration", "<timestamp>"]
   ]
 }
@@ -74,15 +81,15 @@ A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
 * **description** (`required`): User‑facing product/service description.
 * **context** (`optional`): Natural‑language context for optional semantic matching (not displayed).
 * **payload** (`required`): Ad payload (text or image URL).
-* **size** (`required`): `[width, height]` in pixels.
-* **link** (`optional`): URL opened on interaction.
+* **link** (`required`): URL opened on interaction.
 * **call\_to\_action** (`optional`): Button/text prompt (e.g., “Buy now”). The offerer may choose to display this prompt as part of the ad, or omit it entirely. If not set, the offerer may apply a default call-to-action of their own choosing.
-* **bid** (`required`): The amount in msats the advertiser is willing to pay for a successful action.
-* **hold\_time** (`optional`): Seconds the advertiser will reserve funds after the offer has been accepted, while waiting for the action to be completed.
+* **bid** (`required`): The amount in msats the advertiser is willing to pay for a successful action (number).
+* **hold\_time** (`required`): Seconds the advertiser will reserve funds after the offer has been accepted, while waiting for the action to be completed (number).
 
 ### Tags
 
-#### Action Type (`k`) `required`
+#### Action Type 
+(`k`) `required`
 
 Specifies the user action that triggers payment. Available types:
 
@@ -91,7 +98,8 @@ Specifies the user action that triggers payment. Available types:
 * `conversion`: Paid when a user completes a defined goal (e.g., newsletter signup, purchase) after interacting with the ad.
 * `attention`: Paid when the user demonstrates focused engagement (e.g., hovering, dwell time) with the ad content.
 
-#### Mime Type (`m`) `required`
+#### Mime Type 
+(`m`) `required`
 
 Specifies the content format of the ad payload. Supported types:
 
@@ -101,43 +109,51 @@ Specifies the content format of the ad payload. Supported types:
 * `text/plain`: Plain text content
 * `text/markdown`: Markdown-formatted text content
 
-#### Categories (`h`,`H`,`T`,`t`) `optional` `recommended`
+#### Category 
+(`t`) `optional` `recommended`
 
-Organize ads into a hierarchical taxonomy for targeted filtering. 
-Tiers:
+One or more `t` tags specify the categories of the ad content used for filtering and targeting.
+Offerers may choose to display ads only in specific categories. 
 
-* `h`: Tier 1 category
-* `H`: Tier 2 category
-* `T`: Tier 3 category
-* `t`: Tier 4 category
-
-specify an id in the [Nostr Content Taxonomy](../nostr-content-taxonomy) [\[csv\]](nostr-content-taxonomy.csv) (adapted from IAB Content Taxonomy).
+Advertisers should select relevant categories from the [Nostr Content Taxonomy](../nostr-content-taxonomy) [\[csv\]](nostr-content-taxonomy.csv) (adapted from IAB Content Taxonomy).
 
 
-#### Language (`l`) `optional`
+#### Language 
+(`l`) `optional`
 
-Specifies the language of the ad content. Offerers may choose to display ads only to users matching this two‑letter ISO 639‑1 code (e.g., `en`, `es`).
+One or more `l` tags specify the language of the ad content as a two‑letter ISO 639‑1 code (e.g., `en`, `es`).
+Offerers may choose to display ads only in specific languages.
 
-#### Targets (`p`) `optional`
+#### Offerer Whitelist
+(`p`) `optional`
 
-Specifies one or more offerer pubkeys that are authorized to offer to this bid. If an offer originates from a pubkey not listed here, the advertiser may automatically reject it.
+One or more `p` tags specify the pubkeys that are authorized to offer to this bid. 
+If an offer originates from a pubkey not listed in a `p` tag, the advertiser may automatically reject it.
 
-This can be used to target specific apps.
+The advertiser can omit the `p` tag to allow any pubkey to respond to the bid.
 
-#### Ad ID (`d`) `required`
+
+#### App pubkeys
+(`y`) `optional`
+
+One or more `y` tags specify the pubkeys of the applications that are authorized to offer to this bid. 
+If an offer originates from an app not listed in a `y` tag, the advertiser may automatically reject it.
+
+The advertiser can omit the `y` tag to allow any application to respond to the bid.
+
+#### Ad ID 
+(`d`) `required`
 
 * Unique identifier in advertiser’s namespace.
 
-#### Slots `required`  
+#### Price Slot 
+(`f`) `required`
 
-Bids can fill predefined slots that the offerer can use to filter out ads they cannot or do not wish to display. This filtering occurs at the relay level before more detailed ranking takes place.
-
-**f tag**
-
-Format: `BTC<amount>`
-Indicates the minimum millisatoshi (payment) the advertiser is willing to pay per action.
+Indicates the minimum amount of millisatoshi the advertiser is willing to pay per action.
 Accepted values are:
 
+  * `BTC1_000`    (1 satoshis)
+  * `BTC2_000`    (2 satoshis)
   * `BTC10_000`    (10 satoshis)
   * `BTC100_000`   (100 satoshis)
   * `BTC1_000_000`  (1 000 satoshis)
@@ -146,31 +162,88 @@ Accepted values are:
   * `BTC10_000_000` (10 000 satoshis)
   * `BTC50_000_000` (50 000 satoshis)
 
-Offerers can filter out bids below their minimum acceptable satoshi amount.
+Offerers should filter out bids below their minimum acceptable satoshi amount.
 
-**s tag**
+#### Ad size and Aspect ratio 
+(`s`) `required`
+(`S`) `required`
+ 
+Specifies the original dimensions of the ad in pixels and its aspect ratio.
+This information can be used by offerers to filter out bids for ads that are not intended to be displayed in their available ad space.
 
-Format: `<width>x<height>`
-Specifies the maximum container size in pixels that can contain the ad
+Offerers can choose to display the ad anyway and they might perform scaling if needed, but they should use these values as a guide to make sure the ad is properly rendered in the application.
+
 Accepted values are:
 
-- 120x90
-- 180x150
-- 728x90
-- 300x250
-- 720x300
-- 240x400
-- 250x250
-- 300x600
-- 160x600
-- 336x280
+##### standard horizontal
 
-The ad does not have to fill the entire container, but it must fit within the specified dimensions. 
-This allows offerers to pre-filter bids based on their rough ad space capacity.
+best used in web pages
 
-#### expiration tag `optional`
+|`s` tag | `S` tag | description|
+|-------|--------------|------------|
+|`468x60`|`7.8:1`|banner|
+|`728x90`|`8.1:1`|leaderboard|
+|`320x50`|`6.4:1`|mobile leaderboard|
 
-* Unix timestamp (seconds) when bid expires.
+
+##### standard vertical
+
+best used in web pages or mobile apps
+
+`s` tag | `S` tag | description|
+|-------|--------------|------------|
+|`300x600`|`1:2`|half page|
+|`160x600`|`1:3.75`|wide skyscraper|
+|`120X600`|`1:5`|skyscraper|
+
+##### standard rectangles
+
+best used in web pages or mobile apps
+
+|`s` tag | `S` tag | description|
+|-------|--------------|------------|
+|`336x280`|`1.2:1`|large rectangle|
+|`300x250`|`1.2:1`|medium rectangle|
+|`250x250`|`1:1`|square|
+|`200x200`|`1:1`|small square|
+
+
+##### immersive
+
+best used in immersive content, such as games, virtual reality, augmented reality, or video streaming
+
+|`s` tag | `S` tag | description|
+|-------|--------------|------------|
+|`1024x512`|`2:1`|billboard wide|
+|`512x1024`|`1:2`|billboard tall|
+|`1024x1024`|`1:1`|square sign|
+|`1280x720`|`16:9`|billboard HD|
+|`1920x1080`|`16:9`|billboard Full HD|
+|`2048x2048`|`1:1`|high-quality panel|
+|`512x128`|`4:1`|narrow strip|
+|`1920x120`|`16:1`|wide strip|
+
+----
+
+To target different ad sizes, advertisers can publish multiple bidding events with different `s` and `S` tags. 
+ 
+
+#### Delegation  
+(`delegation`) `optional`
+
+Pubkey of a third party that can accept and negotiate offers on behalf of the advertiser.
+
+If a `delegation` tag is present, the offerer must send all negotiation events to the pubkey specified in the `delegation` tag instead of the advertiser's pubkey. 
+
+The third party to whom the delegation is given must have all the necessary info to accept offers and perform payouts on behalf of the advertiser.
+
+This enables separation between the advertiser and the application handling offers and payouts. It allows advertisers to delegate these operations to a third-party service that remains continuously online, without compromising the advertiser's private key.
+
+
+#### Expiration 
+(`expiration`) `optional`
+
+Unix timestamp (seconds) when bid expires.
 
 ---
 
@@ -180,22 +253,23 @@ Advertiser cancels a bid by publishing a NOSTR **Deletion** (`kind:5`) referenci
 
 ---
 
-## Action Events
+## Negotiation Events
 
-Replaceable NIP‑44 encrypted events (`kind:30101`) used for offer, acceptance, payment requests, and payouts.
+Replaceable NIP‑44 encrypted events (`kind:30101`) used for negotiating offers and payouts. These events are used to communicate actions between the advertiser and offerer, such as making offers, accepting offers, requesting payments, and processing payouts.
 
 ```yaml
 {
   "kind": 30101,
   "content": nip44(json({
-    "type": "<action type>",
+    "type": "<type>",
     "message": "<status message>",
-    "difficulty": <optional pow difficulty to respond to the action>,
-    // ... other fields depending on the action type ...
+    "difficulty": <optional pow difficulty to respond to the event>,
+    // ... other fields depending on the type ...
   })),
   "tags": [
-    ["e","<bidding_event_id>"],
-    ["p","<counterparty_pubkey>"]
+    ["d","<event_id>"],
+    ["p","<counterparty_pubkey>"],
+    ["expiration","<timestamp>"]
   ]
 }
 ```
@@ -203,115 +277,120 @@ Replaceable NIP‑44 encrypted events (`kind:30101`) used for offer, acceptance,
 ### Common Fields
 
 * **type** (`required`): Subtype (`offer`, `accept_offer`, etc.).
-* **message** (`required`): Human‑readable status or error.
-* **difficulty** (`optional`): A number defining the number of leading zero bits required in the event ID of the response ActionEvent, as defined in NIP‑13. This proof-of-work mechanism is used to penalize a counterparty that fails to follow the protocol rules. See the  [Punishments and Due Diligence](#punishments-and-due-diligence) section for more details.
+* **message** (`optional`): Human‑readable status or error.
+
 
 ### Common Tags
-* **e** (`required`): The ID of the original bidding event this ActionEvent is related to.
-* **p** (`required`): The pubkey of the counterparty (offerer or advertiser) this ActionEvent is directed to.
+* **d** (`required`): The ID of the event this negotiation is related to.
+* **p** (`required`): The pubkey of the counterparty (offerer or advertiser) this event is directed to.
+* **expiration** (`optional`) Unix timestamp (seconds) when negotiation expires.
 
 
-### Offer ActionEvent (offerer → advertiser)
 
-This Action Event is used by the offerer to propose its ad space for a given bid. The `content` field (encrypted via NIP‑44) must include:
+### Making an offer 
+`(offerer → advertiser)`
+
+This event is used by the offerer to propose its ad space for a given bid. The `content` field (encrypted via NIP‑44) must include:
 
 * **type**: `offer`
-* **invoice** (`required`): A BOLT11 invoice, BOLT12 offer, or LNURL address for payment.
+* **difficulty** (`optional`): The pow required to accept this offer, as detailed in NIP‑13.  0 means no PoW is required.
 
 The tags must include:
 
-* **e**: The ID of the original bidding event this offer is responding to.
-* **p**: The pubkey of the advertiser who made the bid.
+* **d** (`required`): The ID of the original bidding event this offer is responding to.
+* **p** (`required`): The pubkey of the advertiser who made the bid.
+* **y** (`required`): The pubkey of the application this offer is originated from, payments will be sent to the value in the  `lud16` or `lud06` nip-01 metadata associated with this pubkey
 
-Upon receiving this event, the advertiser may accept or reject using the corresponding ActionEvents.
 
-### Accept Offer ActionEvent (advertiser → offerer)
+Upon receiving this event, the advertiser may accept or reject the offer using the corresponding event.
 
-This Action Event is used by the advertiser to accept a specific offer. The encrypted `content` field (NIP‑44) must include:
+
+### Accepting an Offer 
+`(advertiser → offerer)`
+
+This event is used by the advertiser to accept a specific offer. The encrypted `content` field (NIP‑44) must include:
 
 * **type**: `accept_offer`
+* **difficulty** (`optional`): The pow required to request a payment for this offer, as detailed in NIP‑13.  0 means no PoW is required.
 
 The tags must include:
 
-* **e**: The ID of the original bidding event this offer is responding to.
+* **d**: The event id of the offer to accept
 * **p**: The pubkey of the offerer who made the offer.
 
 Upon sending this event, the advertiser must reserve (hold) the full `bid` amount from their funds for up to the specified `hold_time`. This reservation guarantees payment to the offerer once the user action completes and the offerer submits a Payment Request.
 
-### Reject Offer ActionEvent (advertiser → offerer)
 
-This Action Event is used by the advertiser to decline a specific offer. The encrypted `content` field (NIP‑44) must include:
+### Requesting a Payment 
+`(offerer → advertiser)`
 
-* **type**: `reject_offer`
-* **message** (`required`): A string explaining the reason for rejection.
+Upon receiving an `accept_offer` negotiation event, the offerer’s application must begin delivering the ad or user interaction flow. Some actions (e.g., `conversion`) may require user input or external processes and could fail or timeout.
 
-The tags must include:
-
-* **e**: The ID of the original bidding event this offer is responding to.
-* **p**: The pubkey of the offerer who made the offer.
-
-Advertisers may reject offers for reasons such as:
-
-* **out\_of\_budget**: No remaining budget for ads.
-* **payment\_method\_not\_supported**: Unsupported invoice or payment method.
-* **invoice\_expired\_or\_invalid**: Invoice does not match the bid or has expired.
-* **expired**: The bid or ad has expired and can no longer be accepted.
-
-Implementers can define additional custom reason strings as needed.
-
-### Payment Request ActionEvent (offerer → advertiser)
-
-Upon receiving an **Accept Offer** ActionEvent, the offerer’s application must begin delivering the ad or user interaction flow. Some actions (e.g., `conversion`) may require user input or external processes and could fail or timeout.
-
-When the offerer has reason to believe the requested action has been successfully completed, it MUST publish a **Payment Request** ActionEvent (`type=payment_request`) with the following encrypted NIP‑44 content:
+When the offerer has reason to believe the requested action has been successfully completed, it MUST publish a `payment_request` negotiation event with the following encrypted NIP‑44 content:
 
 * **type**: `payment_request`
 * **message** (`required`): A human‑readable explanation of why the action is considered complete (e.g., “Ad displayed to user”, “User clicked link”, “Purchase confirmed”). This explanation can be evaluated by a human or an automated reviewer to determine whether the action was successfully completed.
 
 The tags must include:
 
-* **e**: The ID of the original bidding event this payment request is related to.
+* **d**: The event id of the offer 
 * **p**: The pubkey of the advertiser who made the bid.
 
 This event serves as a trigger for the advertiser to execute the payout.
 
-### Payout ActionEvent (advertiser → offerer)
+### Payout event 
+`(advertiser → offerer)`
 
-Triggered when the advertiser processes a **Payment Request**. Upon receiving a `payment_request` ActionEvent, the advertiser may (optionally) verify the requested user action. The advertiser can choose to skip verification and proceed directly to payment if desired.
+Triggered when the advertiser processes a **Payment Request**. Upon receiving a `payment_request` event, the advertiser may (optionally) verify the requested user action. The advertiser can choose to skip verification and proceed directly to payment if desired.
 
-* If the action is (or is assumed) successful, the advertiser must pay the agreed `bid` amount to the invoice provided in the original **Offer** event, then publish a **Payout** ActionEvent:
+If the action is (or is assumed) successful, the advertiser must pay the agreed `bid` amount to the value in the `lud16` or `lud06` nip-01 metadata associated with the pubkey in the `y` tag of the **Offer** event, then publish a **Payout** event with the following encrypted NIP‑44 content:
 
-  * **type**: `payout`
-  * **message** (`required`): A natural-language description of the payment execution (e.g., “Paid to BOLT11 invoice”, “Paid via LNURL address”). This message can be evaluated by a human or automated reviewer.
-
-* If verification fails or payment cannot be executed, the advertiser should instead publish a **Payout Error** ActionEvent.
-
-The tags must include:
-
-* **e**: The ID of the original bidding event this payout is related to.
-* **p**: The pubkey of the offerer who made the offer.
-
-### Payout Error (advertiser → offerer)
-
-Sent when the advertiser is unable to complete the payout. The encrypted `content` must include:
-
-* **type**: `payout_error`
-* **message** (`required`): An error message explaining why the payout could not be completed. This can be any string, but the following default values are recommended:
-
-  * `no_route`: The advertiser cannot find a payment route to the offerer's node.
-  * `invoice_expired_or_invalid`: The invoice provided is expired or invalid.
-  * `expired`: The bid time has expired or the ad is no longer valid.
-  * `action_incomplete`: The advertiser did not detect successful completion of the user action on their end.
+* **type**: `payout`
+* **message** (`required`): A natural-language description of the payment execution (e.g., “Paid to BOLT11 invoice”, “Paid via LNURL address”). This message can be evaluated by a human or automated reviewer.
+* **preimage** (`optional`): The preimage of the paid invoice, if applicable. This is used to prove that the payment was executed successfully.
 
 
 The tags must include:
 
-* **e**: The ID of the original bidding event this payout error is related to.
+* **d**: The event id of the offer 
 * **p**: The pubkey of the offerer who made the offer.
 
-Upon receiving a `payout_error`, or if no payout is ever initiated, the offerer may, at their discretion, impose penalties or blacklist the advertiser (see [Punishments and Due Diligence](#punishments-and-due-diligence)).
+If verification fails or payment cannot be executed, the advertiser should instead publish a [Bailing Event](#bailing-event) with a reason for rejection.
 
-An advertiser may choose to proceed with payment even after the original bid or ad expiration, ensuring flexibility for late fulfillment.
+
+### Bailing or cancelling an offer 
+`(advertiser → offerer || offerer → advertiser)`
+
+Both the advertiser and the offerer can inform the other party that they intend to bail out or reject an offer by a negotiation event with the following encrypted NIP‑44 content:
+
+* **type**: `bail`
+* **message** (`required`): The reason for bailing out or cancelling the offer.
+
+The tags must include:
+
+* **d**: The event id of the offer to bail or cancel
+* **p**: The pubkey of the counterparty (offerer or advertiser) this event is directed to.
+
+The following default messages are recommended for use when bailing out of an offer:
+
+advertiser → offerer:
+
+* `out_of_budget`: No remaining budget for ads.
+* `payment_method_not_supported`: Unsupported invoice or payment method.
+* `invoice_expired_or_invalid`: Invoice does not match the bid or has expired.
+* `expired`: The bid or ad has expired and can no longer be accepted.
+* `no_route`: The advertiser cannot find a payment route to the offerer's node.
+* `action_incomplete`: The advertiser did not detect successful completion of the user action on their end.
+
+offerer → advertiser:
+
+* `cancelled`: The offerer has cancelled the offer
+* `adspace_unavailable`: The ad space is no longer available for the requested ad.
+* `ad_not_displayed`: The ad was not displayed to the user.
+
+Implementers can define additional custom reason strings as needed.
+
+When an offer that was originally agreed upon is bailed, the counterparty may choose to impose a punitive measure, such as banning the offending pubkey from future interactions or requiring a proof‑of‑work challenge to continue, see [Punishments and Due Diligence](#punishments-and-due-diligence) for more details.
 
 
 ## Punishments and Due Diligence
@@ -326,7 +405,7 @@ An application may falsely claim completion of user actions (e.g., reporting an 
 If an advertiser detects cheating, it may:
 
 * Ignore all future offers from the offending pubkey.
-* Impose a PoW challenge by raising the `difficulty` in outgoing ActionEvents, requiring the offerer to commit computational work to continue interactions.
+* Impose a PoW challenge by raising the `difficulty` in outgoing negotiation events, requiring the offerer to commit computational work to continue interactions.
 
 ### When the advertiser cheats
 
@@ -335,10 +414,18 @@ An advertiser may fail to honor payments, claim `hold_time` has expired prematur
 If an offerer detects misbehavior, it may:
 
 * Reject bids from that advertiser pubkey permanently.
-* Impose a PoW challenge by raising the `difficulty` in outgoing ActionEvents, requiring the advertiser to commit computational work to continue interactions.
+* Impose a PoW challenge by raising the `difficulty` in outgoing negotiation events, requiring the advertiser to commit computational work to continue interactions.
 
 ---
 
 Implementations should maintain local blacklists of repeat offenders and may share reputational data off‑protocol to enhance ecosystem trustworthiness.
 
 THe Pow penalty PoW deters further misconduct while allowing honest parties to redeem themselves for issues that may have been caused by bugs or misconfigurations.
+
+
+## Tracking Actions
+
+To track which offer triggers a specific action, the advertiser can include a `$OFFER_ID` placeholder in the destination link. The offerer must replace this placeholder with the ID of the accepted offer event before displaying the ad. This enables the advertiser to correlate user actions with the specific offer that generated them.
+
+eg. 
+  `https://example.com/landing-page?track=$OFFER_ID`
