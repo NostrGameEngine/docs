@@ -70,7 +70,7 @@ A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
     ["f", "<price slot>"],
     ["s", "<size>"],
     ["S", "<aspect ratio>"],
-    ["delegation", "<delegation pubkey>"],
+    ["D", "<delegate pubkey>", "<payload>"],
     ["expiration", "<timestamp>"]
   ]
 }
@@ -133,7 +133,7 @@ If an offer originates from a pubkey not listed in a `p` tag, the advertiser may
 The advertiser can omit the `p` tag to allow any pubkey to respond to the bid.
 
 
-#### App pubkeys
+#### App Whitelist
 (`y`) `optional`
 
 One or more `y` tags specify the pubkeys of the applications that are authorized to offer to this bid. 
@@ -181,9 +181,9 @@ best used in web pages
 
 |`s` tag | `S` tag | description|
 |-------|--------------|------------|
-|`468x60`|`7.8:1`|banner|
-|`728x90`|`8.1:1`|leaderboard|
-|`320x50`|`6.4:1`|mobile leaderboard|
+|`480x60`|`8:1`|banner|
+|`720x90`|`8:1`|leaderboard|
+|`300x50`|`6:1`|mobile leaderboard|
 
 
 ##### standard vertical
@@ -193,7 +193,7 @@ best used in web pages or mobile apps
 `s` tag | `S` tag | description|
 |-------|--------------|------------|
 |`300x600`|`1:2`|half page|
-|`160x600`|`1:3.75`|wide skyscraper|
+|`160x600`|`1:3`|wide skyscraper|
 |`120X600`|`1:5`|skyscraper|
 
 ##### standard rectangles
@@ -202,8 +202,6 @@ best used in web pages or mobile apps
 
 |`s` tag | `S` tag | description|
 |-------|--------------|------------|
-|`336x280`|`1.2:1`|large rectangle|
-|`300x250`|`1.2:1`|medium rectangle|
 |`250x250`|`1:1`|square|
 |`200x200`|`1:1`|small square|
 
@@ -214,12 +212,12 @@ best used in immersive content, such as games, virtual reality, augmented realit
 
 |`s` tag | `S` tag | description|
 |-------|--------------|------------|
+|`2048x2048`|`1:1`|high-quality panel|
+|`1024x1024`|`1:1`|square sign|
 |`1024x512`|`2:1`|billboard wide|
 |`512x1024`|`1:2`|billboard tall|
-|`1024x1024`|`1:1`|square sign|
 |`1280x720`|`16:9`|billboard HD|
 |`1920x1080`|`16:9`|billboard Full HD|
-|`2048x2048`|`1:1`|high-quality panel|
 |`512x128`|`4:1`|narrow strip|
 |`1920x120`|`16:1`|wide strip|
 
@@ -228,18 +226,33 @@ best used in immersive content, such as games, virtual reality, augmented realit
 To target different ad sizes, advertisers can publish multiple bidding events with different `s` and `S` tags. 
  
 
-#### Delegation  
-(`delegation`) `optional`
+#### Delegate  
+(`D`) `required`
 
-Pubkey of a third party that can accept and negotiate offers on behalf of the advertiser.
+The `D` is used to define the pubkey that is delegated to manage the ad campaign on behalf of the advertiser. 
+This allows advertisers to trust a specialized third-party to stay always online and handle the negotiations and payments for them.
 
-If a `delegation` tag is present, the offerer must send all negotiation events to the pubkey specified in the `delegation` tag instead of the advertiser's pubkey. 
+An advertiser may choose to delegate the management of their ads to a delegate they run themselves.
 
-The third party to whom the delegation is given must have all the necessary info to accept offers and perform payouts on behalf of the advertiser.
+The tag must contain two values:
 
-This enables separation between the advertiser and the application handling offers and payouts. It allows advertisers to delegate these operations to a third-party service that remains continuously online, without compromising the advertiser's private key.
+1. A hex-encoded public key identifying the delegate (i.e., the bot or service that will handle negotiations and payouts).
+2. `(optional)` A payload containing additional information needed by the delegate to fulfill its role. This is typically an **encrypted JSON object**,  NIP-44 with the delegate’s public key as the recipient.
 
+A typical decrypted payload might look like:
 
+```yaml
+{
+  "budget": 10000, // Maximum budget in millisatoshis for this campaign
+  "nwc": "nostr+walletconnect://..." // Budgeted NWC URL used to authorize payouts
+}
+```
+
+If a `D` tag is included, **all negotiation events must be sent to the delegate's pubkey** (from the tag), **not the advertiser’s**. This ensures the delegate handles the lifecycle of offers and payments.
+
+Delegates might automatically listen for biddings that have a matching `D` tag.
+
+ 
 #### Expiration 
 (`expiration`) `optional`
 
@@ -263,7 +276,6 @@ Replaceable NIP‑44 encrypted events (`kind:30101`) used for negotiating offers
   "content": nip44(json({
     "type": "<type>",
     "message": "<status message>",
-    "difficulty": <optional pow difficulty to respond to the event>,
     // ... other fields depending on the type ...
   })),
   "tags": [
