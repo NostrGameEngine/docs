@@ -1,4 +1,4 @@
-## NOSTR  Secure Decentralized Ads Network (NOSTR‑SDAN)
+## NOSTR Ads Network
 
 `draft` `optional`  `author:riccardobl` 
 
@@ -6,7 +6,7 @@
 
 ## Rationale
 
-Most digital products rely on data‑driven advertising. NOSTR‑SDAN brings this model to NOSTR apps, enabling decentralized ad auctions and payouts. By standardizing bidding, offers, and payments via NOSTR events, applications can:
+Most digital products rely on data‑driven advertising. NOSTR‑ADS brings this model to NOSTR apps, enabling decentralized ad auctions and payouts. By standardizing bidding, offers, and payments via NOSTR events, applications can:
 
 * Monetize through ad space auctions
 * Distribute ads across multiple offerers
