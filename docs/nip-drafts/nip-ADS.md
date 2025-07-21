@@ -43,7 +43,9 @@ A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
     "link": "<link to open when the ad is interacted with>",
     "call_to_action": "<text for the call to action>",
     "bid": <amount in msats to pay per action>,
-    "hold_time": <time in seconds>
+    "hold_time": <time in seconds>,
+    "max_payouts": <maximum number of paid actions>,
+    "payout_reset_interval": <interval in seconds to reset the payout count>, 
   }),
   "tags": [
     ["k", "<action type>"],
@@ -76,6 +78,9 @@ A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
 * **call\_to\_action** (`optional`): Button/text prompt (e.g., “Buy now”). The offerer may choose to display this prompt as part of the ad, or omit it entirely. If not set, the offerer may apply a default call-to-action of their own choosing.
 * **bid** (`required`): The amount in msats the advertiser is willing to pay for a successful action (number).
 * **hold\_time** (`required`): Seconds the advertiser will reserve funds after the offer has been accepted, while waiting for the action to be completed (number).
+* **max\_payouts** (`required`):  The maximum number of times an offerer can be paid for a successful action per ad. Payouts pause once this limit is reached and resume after the payout_reset_interval.
+* **payout_reset_interval** (`required`):  Time in seconds after which the payouts counter resets, allowing payouts to resume.
+
 
 ### Tags
 
@@ -84,10 +89,9 @@ A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
 
 Specifies the user action that triggers payment. Available types:
 
-* `link`: Paid when a user clicks the ad and successfully opens the target URL.
+* `action`: Paid when a user clicks or performs a similar interaction with the ad to open the target URL.
 * `view`: Paid when the ad is rendered and visible to the user.
-* `conversion`: Paid when a user completes a defined goal (e.g., newsletter signup, purchase) after interacting with the ad.
-* `attention`: Paid when the user demonstrates focused engagement (e.g., hovering, dwell time) with the ad content.
+* `attention`: Paid when the user shows focused engagement with the ad (e.g., hover, dwell time, or when the ad enters the viewport).
 
 #### Mime Type 
 (`m`) `required`
@@ -233,7 +237,7 @@ A typical decrypted payload might look like:
 
 ```yaml
 {
-  "budget": 10000, // Maximum budget in millisatoshis for this campaign
+  "dailyBudget": 10000, // hint the delegate to limit the total amount of msats spent per day
   "nwc": "nostr+walletconnect://..." // Budgeted NWC URL used to authorize payouts
 }
 ```
@@ -242,6 +246,9 @@ If a `D` tag is included, **all negotiation events must be sent to the delegate'
 
 Delegates might automatically listen for biddings that have a matching `D` tag.
 
+> [!IMPORTANT]  
+> The dailyBudget should be considered a recommendation to help the delegate pace spending; it’s not a hard cap. To prevent overspend, a strict budget limit should be configured at the NWC wallet level.
+ 
  
 #### Expiration 
 (`expiration`) `optional`
@@ -375,20 +382,13 @@ The tags must include:
 
 The following default messages are recommended for use when bailing out of an offer:
 
-advertiser → offerer:
-
 * `out_of_budget`: No remaining budget for ads.
-* `payment_method_not_supported`: Unsupported invoice or payment method.
-* `invoice_expired_or_invalid`: Invoice does not match the bid or has expired.
-* `expired`: The bid or ad has expired and can no longer be accepted.
-* `no_route`: The advertiser cannot find a payment route to the offerer's node.
+* `expired`: The bid or hold time has expired and the negotiation is no longer valid or not accepted.
+* `failed_payment`: The advertiser can't pay the invoice
 * `action_incomplete`: The advertiser did not detect successful completion of the user action on their end.
-
-offerer → advertiser:
-
-* `cancelled`: The offerer has cancelled the offer
-* `adspace_unavailable`: The ad space is no longer available for the requested ad.
-* `ad_not_displayed`: The ad was not displayed to the user.
+* `cancelled`: The offer was cancelled.
+* `unknown` : unknown reason for bailing out.
+ 
 
 Implementers can define additional custom reason strings as needed.
 
