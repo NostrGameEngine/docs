@@ -169,51 +169,21 @@ Offerers can choose to display the ad anyway and they might perform scaling if n
 
 Accepted values are:
 
-##### standard horizontal
-
-best used in web pages
 
 |`s` tag | `S` tag | description|
 |-------|--------------|------------|
 |`480x60`|`8:1`|banner|
 |`720x90`|`8:1`|leaderboard|
-|`300x50`|`6:1`|mobile leaderboard|
-
-
-##### standard vertical
-
-best used in web pages or mobile apps
-
-`s` tag | `S` tag | description|
 |-------|--------------|------------|
-|`300x600`|`1:2`|half page|
-|`160x600`|`1:3`|wide skyscraper|
-|`120X600`|`1:5`|skyscraper|
-
-##### standard rectangles
-
-best used in web pages or mobile apps
-
-|`s` tag | `S` tag | description|
+|`512x128`|`4:1`|horizontal banner|
+|`512x256`|`2:1`|horizontal narrow banner|
 |-------|--------------|------------|
-|`250x250`|`1:1`|square|
-|`200x200`|`1:1`|small square|
-
-
-##### immersive
-
-best used in immersive content, such as games, virtual reality, augmented reality, or video streaming
-
-|`s` tag | `S` tag | description|
+|`256x512`|`1:2`|vertical banner|
+|`128x512`|`1:4`|vertical narrow banner|
 |-------|--------------|------------|
-|`2048x2048`|`1:1`|high-quality panel|
-|`1024x1024`|`1:1`|square sign|
-|`1024x512`|`2:1`|billboard wide|
-|`512x1024`|`1:2`|billboard tall|
-|`1280x720`|`16:9`|billboard HD|
-|`1920x1080`|`16:9`|billboard Full HD|
-|`512x128`|`4:1`|narrow strip|
-|`1920x120`|`16:1`|wide strip|
+|`256x256`|`1:1`|square|
+
+
 
 ----
 
