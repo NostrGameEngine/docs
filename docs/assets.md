@@ -42,7 +42,7 @@ NGE includes several loaders for backward compatibility with jME3, however, only
 
 ### Models
 * glTF 2.0
-* ogg
+* Wavefront OBJ
 
 glTF is the best and recommended way to get quality models into your app.
 Models loaded in glTF that use the PBR material, should closely match the original model once imported, including textures and animations.
