@@ -73,13 +73,36 @@ You can start experimenting with the source code you've just downloaded, to see 
 Whenever your application is ready, you can head over to the [Building and Distribution](./build.md) section to learn how to package your app for distribution.
 
 
+
+
 ## NGEApplication
 
-Everything begins with a `NGEApplication`, which you instantiate via a static method:
+Everything begins with an `NGEApplication`.
+An `NGEApplication` should be initialized with an **appId**, which is simply a valid Nostr public key.
+
+The **appId** is used throughout the engine to uniquely identify your application. For example, it scopes persistent storage data and serves as your app’s identifier for [in-game ads](./ads.md).
+
+You can generate an appId in two ways:
+
+* **Generate a random key**
 
 ```java
-Runnable appBuilder = NGEApplication.createApp(app -> {
-    // ...
+NostrPublicKey appId = NostrPrivateKey.generate().getPublicKey();
+```
+
+* **Import an existing key**
+  That can be obtained, for example, by creating a Nostr profile with a client like [Primal](https://primal.net/).
+  This approach is recommended because it allows you to easily compile a complete app profile, which will be used later in the documentation.
+
+```java
+NostrPublicKey appId = NostrPublicKey.fromBech32("npub...");
+```
+
+Once you have your appId, you can initialize your application with:
+
+```java
+NGEAppRunner appRunner = NGEApplication.createApp(appId, app -> {
+    // ... callback once app is ready ....
 });
 ```
 
@@ -105,17 +128,17 @@ settings.setVSync(true);
 settings.setGraphicsDebug(false);
 settings.setTitle("Nostr Game Engine Demo");
 
-Runnable appBuilder = NGEApplication.createApp(settings, app -> {
-    // ...
+Runnable appBuilder = NGEApplication.createApp(appId, settings, app -> {
+    // ... callback once app is ready ....
 });
 ```
 
 
 ## Initialize and Run!
-Once you have the `Runnable` returned from `createApp`, you can call:
+Once you have the `NGEAppRunner` returned from `createApp`, you can call:
 
 ```java
-appBuilder.run();
+appBuilder.start();
 ```
 
 to begin initializing and running your application.
