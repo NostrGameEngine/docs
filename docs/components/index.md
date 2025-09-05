@@ -28,13 +28,12 @@ public interface Component<T> {
 ## Fragments
 !!! abstract "See [Fragment Javadoc](https://javadoc.ngengine.org/org/ngengine/components/fragments/Fragment.html)"
 
-Fragments are interfaces that extend a component’s functionality. By implementing one or more fragment interfaces (e.g., `MainViewPortFragment`, `LogicFragment`), a component signals which engine systems it needs. The manager detects these fragments and handles their lifecycle in a predefined order:
+Fragments are interfaces that extend a component’s functionality. By implementing one or more fragment interfaces (e.g., `AssetLoadingFragment`, `LogicFragment`), a component signals which engine systems it needs. The manager detects these fragments and handles their lifecycle in a predefined order:
 
-1. **Initialization** (`receiveXXX` methods)  
-2. **Loading** (`loadXXX` methods)  
-3. **Enable** (via the component’s `onEnable`)  
-4. **Update** (`updateXXX` methods called on each update tick)  
-5. **Disable** (via the component’s `onDisable`)
+1. **Load** (`loadXXX` methods)  
+2. **Enable** (via the component’s `onEnable`)  
+3. **Update** (`updateXXX` methods called on each update tick)  
+4. **Disable** (via the component’s `onDisable`)
 
 This composition-based design avoids deep inheritance hierarchies. Each fragment represents hooks into specific engine subsystems, allowing the component to participate in various aspects of the game/application lifecycle without being tightly coupled to the engine.
 
@@ -82,3 +81,36 @@ from there you should proceed to implement as many fragments as needed, until yo
 
 
 A list of available fragments can be found in the [Javadoc](https://javadoc.ngengine.org/org/ngengine/components/fragments/package-summary.html).
+
+
+ 
+
+## Accessing Engine Objects
+
+Components sometimes need to interact with core engine objects such as input, rendering, or asset management.
+A common but discouraged approach is to inject these dependencies manually (e.g., via constructors or setters). This makes components harder to reuse and more tightly bound to a specific initialization context.
+
+Instead, you should retrieve global engine objects through [`ComponentManager.getGlobalInstance(Class)`](https://javadoc.ngengine.org/org/ngengine/components/ComponentManager.html#getGlobalInstance%28java.lang.Class%29).
+From any point where you have access to a `ComponentManager`, you can request the object class you need.
+
+### Commonly Available Objects
+
+| Class                                  | Description                                                        |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| `com.jme3.input.InputManager`          | Manages input devices, used for advanced input handling            |
+| `com.jme3.renderer.RenderManager`      | Controls low-level rendering features                              |
+| `org.ngengine.store.DataStoreProvider` | Provides access to the persistent data store                       |
+|  |   |
+|  |   |
+| `com.jme3.asset.AssetManager`          | Loads assets synchronously                                         |
+| `org.ngengine.AsyncAssetManager`       | Loads assets synchronously or asynchronously                       |
+|  |   |
+|  |   |
+| `com.jme3.renderer.ViewPort`           | Represents the main scene ViewPort                                 |
+| `com.jme3.renderer.Camera`             | Camera associated with the main ViewPort                           |
+| `org.ngengine.ViewPortManager`         | Provides access to all ViewPorts, including main and GUI ViewPorts |
+|  |   |
+|  |   |
+| `com.jme3.app.Application`             | Legacy: current jME3 Application instance (avoid if possible)      |
+| `com.jme3.app.state.AppStateManager`   | Legacy: manages AppStates (avoid if possible)                      |
+

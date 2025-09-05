@@ -18,9 +18,13 @@ You control the color and intensity of each light source. Typically you set the 
 You can choose to use lights in other colors than white, or darker colors. This influences the scene’s atmosphere and will make the scene appear colder (e.g. `ColorRGBA.Cyan`) or warmer (`ColorRGBA.Yellow`), brighter (higher values) or darker (lower values).
 
 
-Lights attached to a spatial will illuminate only the spatial itself and its children. If you want to illuminate the entire scene, you should attach lights to the root node.
+Lights attached to a spatial will illuminate only the spatial itself and its children. If you want to illuminate the entire scene, you should initialize them as **global** lights by passing `true` as `global` parameter to the light constructor.
 
-You can get a list of all lights added to a Spatial by `calling getWorldLightList()` (includes inherited lights) or `getLocalLightList()` (only directly added lights), and iterating over the result.
+```java
+PointLight globalLight = new PointLight(true);
+```
+
+You can get a list of all lights added to a Spatial by `calling getWorldLightList()` (includes inherited lights and global lights) or `getLocalLightList()` (only directly added lights), and iterating over the result.
 
 
 ## PointLight
@@ -33,7 +37,7 @@ A PointLight has a location and shines from there in all directions as far as it
 !!! example "Example: Lamp, lightbulb, torch, candle"
 
 ```java
-PointLight lamp_light = new PointLight();
+PointLight lamp_light = new PointLight(true); // global light
 lamp_light.setColor(ColorRGBA.Yellow);
 lamp_light.setRadius(4f);
 lamp_light.setPosition(new Vector3f(lamp_geo.getLocalTranslation()));
@@ -51,7 +55,7 @@ A DirectionalLight has no position, only a direction. It sends out parallel beam
 !!! example "Example: Sun light"
 
 ```java
-DirectionalLight sun = new DirectionalLight();
+DirectionalLight sun = new DirectionalLight(true); // global light
 sun.setColor(ColorRGBA.White);
 sun.setDirection(new Vector3f(-.5f,-.5f,-.5f).normalizeLocal());
 rootNode.addLight(sun);
@@ -67,7 +71,7 @@ A SpotLight sends out a distinct beam or cone of light. A SpotLight has a direct
 !!! example "Example: Flashlight"
 
 ```java
-SpotLight spot = new SpotLight();
+SpotLight spot = new SpotLight(true); // global light
 spot.setSpotRange(100f);                           // distance
 spot.setSpotInnerAngle(15f * FastMath.DEG_TO_RAD); // inner light cone (central beam)
 spot.setSpotOuterAngle(35f * FastMath.DEG_TO_RAD); // outer light cone (edge of the light)
@@ -86,7 +90,7 @@ An AmbientLight simply influences the brightness and color of the scene globally
 !!! example "Example: Regulate overall brightness, tinge the whole scene in a warm or cold color"
 
 ```java
-AmbientLight al = new AmbientLight();
+AmbientLight al = new AmbientLight(); // local light
 al.setColor(ColorRGBA.White.mult(1.3f));
 rootNode.addLight(al);
 ```
