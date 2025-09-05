@@ -32,10 +32,10 @@ NGE includes several loaders for backward compatibility with jME3, however, only
 ### Textures
 * PNG
 * JPG
-* DDS: 2d textures and cubemaps, uncompressed or compressed in DXT1, DXT3, DXT5, RGTC1, RGTC2 or ETC2 formats
+* DDS: 2d textures and cubemaps, uncompressed or compressed in DXT1, DXT3, DXT5, RGTC1, RGTC2 or ETC2 formats (depends on hardware support)
 * HDR
 * SVG
-* WEBP
+* WEBP: (depends on platform support)
 
 ### Audio
 * OGG Vorbis
