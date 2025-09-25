@@ -1,33 +1,96 @@
-## NOSTR Ads Network
+# NOSTR Ads Network
 
 `draft` `optional`  `author:riccardobl` 
 
 
 ---
+ 
+## High-level Overview
 
-# High Level Overview
+This NIP defines a standard protocol for coordinating interactions in a decentralized advertising ecosystem built on Nostr.
 
-1. **Advertiser** publishes a **Bidding** event (`kind:30100`) with ad description, bid parameters, and targeting.
-2. **Offerers** filter these events, then respond with an **Offer** negotiation event (`kind:30101`, `type=offer`) containing a payout invoice.
-3. **Advertiser** reviews offers and sends an **Accept offer** negotiation event (`kind:30101`, `type=accept_offer`).
-4. Upon acceptance, **Offerer** displays the ad; once the user action completes, sends a **Payment Request** negotiation event (`kind:30101`, `type=payment_request`).
-5. **Advertiser** pays and emits a **Payout** (`type=payout`), optionally including a refund invoice and the preimage as proof of payment.
-6. Either party can **Bail** (`kind:30101`, `type=bail`) at any point with an explanation, optionally providing the preimage of the refund payment.
-7. Parties may impose NIP-13 PoW challenges (`difficulty` field) to deter cheating.
-8. For conversion tracking, advertisers can include a `$OFFER_ID` placeholder in destination links.
+The ecosystem involves four main roles:
+
+* **Application**: A passive entity that serves as the ad placement target. It does not participate in negotiations directly but represents the environment (website, app, or codebase) where ads are shown. Applications also act as the recipient of payouts for completed ad actions.
+* **Advertiser**: The entity that wants to promote a product, service, or brand. Advertisers create bids and fund ad placements.
+* **Delegate**: A service that manages negotiations and executes payments on behalf of the advertiser. Delegates handle the interaction with offerers and enforce the campaign’s rules.
+* **Offerer**: A user of an application who is presented with ads as part of their interaction with the app. Offerers engage in negotiations with the delegate and carry out the display of ads.
+
+All communication flows between the **Offerer** and the **Delegate**, but always in relation to a bid originally created by an **Advertiser**. The advertiser entrusts the **Delegate** with managing the ad campaign, while the **Application** provides the context and the payout address.
 
 
----
+### Advertiser’s workflow
 
-## Nomenclature
+Advertisers are entities (individuals, companies, or organizations) that want to promote a product, service, or brand.
 
-* **Advertiser**: Entity promoting a product or service, paying per user action.
-* **Offerer**: Entity offering ad space in their application.
-* **Bid**: Advertiser’s proposed msat amount per action.
-* **Action**: User interaction that triggers payment (e.g., view, click).
-* **PoW Difficulty**: Optional proof‑of‑work requirement to penalize misbehavior.
+They interact with two main components:
 
----
+* A **Client**, which facilitates ads creation and submission of bids.
+* A **Delegate Service**, which negotiates deals and manages payments for ad placements on behalf of the advertiser.
+
+The workflow looks like this:
+
+1. The **Advertiser** publishes a [Bidding Event](#bidding-event), tagging it with the public key of the chosen **Delegate Service**.
+2. The **Delegate Service** picks up the event and decides whether to handle it or ignore it.
+3. For each bid it manages, the **Delegate Service** processes incoming [Offers](#making-an-offer), handles the [Negotiation](#negotiation-events), and pays the **Applications** once the ad action is successfully completed.
+
+*Advertisers can rely on third-party delegate services, or they may choose to run their own for maximum control and decentralization.*
+
+*The delegate might take a small fee from the advertiser for its services, but the fee structure and terms are outside the scope of this NIP and specific to the delegate’s implementation.*
+
+### Application
+
+An **Application** is any digital environment where ads can be shown. 
+
+It is represented by a unique Nostr public key and can be:
+
+* A website
+* A mobile app
+* A game
+* The user itself
+
+etc...
+
+**Delegates** pay **Applications** for bids that are successfully fulfilled by **Offerers**.
+
+To accept payments, each application must have a published NIP-01 metadata event containing a `lud16` or `lud06` field with its payment address.
+
+
+
+
+### Offerer’s workflow
+
+ 
+
+An **Offerer** is a user of an application that can display ads in exchanges of payments made to the application `lud16` or `lud06` address.
+
+When users interact with the application, they automatically trigger its **discovery logic**, which searches for relevant bids. The specifics of this filtering are implementation-dependent, but common strategies include:
+
+* Subscribing to relays with filters that match the application’s current context (e.g., page content, session type).
+* Taking into account user preferences, such as interests or blocked advertisers.
+* Applying additional application-specific rules.
+
+Once a suitable **Bid** is identified, the **Offerer** initiates a negotiation with the bid’s **Delegate** using [Negotiation Events](#negotiation-events). To preserve privacy, these events are signed with *ephemeral, anonymous private keys* generated by the application itself. These keys are short-lived (e.g., refreshed at each app launch or per session), ensuring that individual offers cannot be trivially linked back to the user.
+
+ 
+
+The **Offerer’s workflow** is:
+
+1. When a relevant bid is found, a random private key is generated. This key will be used to sign every event sent by the **Offerer**.
+2. An [Offer Event](#making-an-offer), tagged with the application’s pubkey, is sent to the **Delegate** specified in the bid.
+3. The **Delegate** reviews the offer and either:
+
+    - Accepts it with an [Accept Offer Event](#accepting-an-offer).
+    - Rejects it with a [Bailing Event](#bailing-or-cancelling-an-offer).
+
+4. If accepted, the **Offerer** must display the ad and, once the required action is completed (or assumed to be completed), send a [Payment Request Event](#requesting-a-payment) to the **Delegate**.
+5. The **Delegate** may verify the action (e.g., by tracking if the link was followed) and pay the application’s designated payment `lud16`/`lud06` address.
+6. The **Delegate** then publishes a [Payout Event](#payout-event) and the negotiation is considered complete.
+
+At any time, either party can [Bail](#bailing-or-cancelling-an-offer) out of the negotiation with a reason.
+To reduce fraud or abuse, participants may impose a [Proof-of-Work penalty](#punishments-and-due-diligence) if the other party is suspected of cheating or misbehaving.
+
+ 
 
 ## Bidding Event
 
@@ -45,7 +108,7 @@ A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
     "bid": <amount in msats to pay per action>,
     "hold_time": <time in seconds>,
     "max_payouts": <maximum number of paid actions>,
-    "payout_reset_interval": <interval in seconds to reset the payout count>, 
+    "payout_reset_interval": <interval in seconds to reset the max_payouts count>, 
   }),
   "tags": [
     ["k", "<action type>"],
@@ -77,9 +140,9 @@ A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
 * **link** (`required`): URL opened on interaction.
 * **call\_to\_action** (`optional`): Button/text prompt (e.g., “Buy now”). The offerer may choose to display this prompt as part of the ad, or omit it entirely. If not set, the offerer may apply a default call-to-action of their own choosing.
 * **bid** (`required`): The amount in msats the advertiser is willing to pay for a successful action (number).
-* **hold\_time** (`required`): Seconds the advertiser will reserve funds after the offer has been accepted, while waiting for the action to be completed (number).
+* **hold\_time** (`required`): Seconds the delegate will reserve funds after the offer has been accepted, while waiting for the action to be completed (number).
 * **max\_payouts** (`required`):  The maximum number of times an offerer can be paid for a successful action per ad. Payouts pause once this limit is reached and resume after the payout_reset_interval.
-* **payout_reset_interval** (`required`):  Time in seconds after which the payouts counter resets, allowing payouts to resume.
+* **payout_reset_interval** (`required`):  Time in seconds after which the max_payouts counter resets, allowing payouts to resume.
 
 
 ### Tags
@@ -184,7 +247,6 @@ Accepted values are:
 
 
 
-----
 
 To target different ad sizes, advertisers can publish multiple bidding events with different `s` and `S` tags. 
  
@@ -200,7 +262,7 @@ An advertiser may choose to delegate the management of their ads to a delegate t
 The tag must contain two values:
 
 1. A hex-encoded public key identifying the delegate (i.e., the bot or service that will handle negotiations and payouts).
-2. `(optional)` A payload containing additional information needed by the delegate to fulfill its role. This is typically an **encrypted JSON object**,  NIP-44 with the delegate’s public key as the recipient.
+2. `(optional)` A payload containing additional information needed by the delegate to fulfill its role. This is typically an **stringified JSON object** NIP-44 encrypted with the delegate’s public key as the recipient.
 
 A typical decrypted payload might look like:
 
@@ -210,8 +272,6 @@ A typical decrypted payload might look like:
   "nwc": "nostr+walletconnect://..." // Budgeted NWC URL used to authorize payouts
 }
 ```
-
-If a `D` tag is included, **all negotiation events must be sent to the delegate's pubkey** (from the tag), **not the advertiser’s**. This ensures the delegate handles the lifecycle of offers and payments.
 
 Delegates might automatically listen for biddings that have a matching `D` tag.
 
@@ -224,17 +284,20 @@ Delegates might automatically listen for biddings that have a matching `D` tag.
 
 Unix timestamp (seconds) when bid expires.
 
----
 
 ## Cancellation Event
 
 Advertiser cancels a bid by publishing a NOSTR **Deletion** (`kind:5`) referencing the bidding event ID.
 
----
 
-## Negotiation Events
+## Negotiation Events overview
 
-Replaceable NIP‑44 encrypted events (`kind:30101`) used for negotiating offers and payouts. These events are used to communicate actions between the advertiser and offerer, such as making offers, accepting offers, requesting payments, and processing payouts.
+Replaceable NIP‑44 encrypted events (`kind:30101`) used for negotiating offers and payouts between the offerer and delegate.
+
+The content field is encrypted using the NIP-44 standard, using the counterparty pubkey as the recipient:
+
+  - If the event is sent by the offerer, the recipient is the delegate pubkey from the bid's `D` tag.
+  - If the event is sent by the delegate, the recipient is the author of the offer event (ie. the offerer ephemeral pubkey).
 
 ```yaml
 {
@@ -260,51 +323,57 @@ Replaceable NIP‑44 encrypted events (`kind:30101`) used for negotiating offers
 
 ### Common Tags
 * **d** (`required`): The ID of the event this negotiation is related to.
-* **p** (`required`): The pubkey of the counterparty (offerer or advertiser) this event is directed to.
+* **p** (`required`): The pubkey of the counterparty (offerer or delegate) this event is directed to.
 * **expiration** (`optional`) Unix timestamp (seconds) when negotiation expires.
 
 
 
-### Making an offer 
-`(offerer → advertiser)`
+## Making an offer 
+`(offerer → delegate)`
 
-This event is used by the offerer to propose its ad space for a given bid. The `content` field (encrypted via NIP‑44) must include:
+This event is used by the offerer to propose its ad space for a given bid. 
+
+The `content` field (encrypted via NIP‑44) must include:
 
 * **type**: `offer`
-* **difficulty** (`optional`): The pow required to accept this offer, as detailed in NIP‑13.  0 means no PoW is required.
+* **difficulty** (`optional`): The pow required to accept this offer, as detailed in NIP‑13 (0 means no PoW is required).
 
 The tags must include:
 
 * **d** (`required`): The ID of the original bidding event this offer is responding to.
-* **p** (`required`): The pubkey of the advertiser who made the bid.
+* **p** (`required`): The pubkey of the delegate for this bid
 * **y** (`required`): The pubkey of the application this offer is originated from, payments will be sent to the value in the  `lud16` or `lud06` nip-01 metadata associated with this pubkey
 
 
-Upon receiving this event, the advertiser may accept or reject the offer using the corresponding event.
+Upon receiving this event, the delegate may accept or reject the offer on behalf of the advertiser, using the corresponding event.
 
 
-### Accepting an Offer 
-`(advertiser → offerer)`
+## Accepting an Offer 
+`(delegate → offerer)`
 
-This event is used by the advertiser to accept a specific offer. The encrypted `content` field (NIP‑44) must include:
+This event is used by the delegate to accept a specific offer. 
+
+The encrypted `content` field (NIP‑44) must include:
 
 * **type**: `accept_offer`
-* **difficulty** (`optional`): The pow required to request a payment for this offer, as detailed in NIP‑13.  0 means no PoW is required.
+* **difficulty** (`optional`): The pow required to request a payment for this offer, as detailed in NIP‑13 (0 means no PoW is required).
 
 The tags must include:
 
 * **d**: The event id of the offer to accept
 * **p**: The pubkey of the offerer who made the offer.
 
-Upon sending this event, the advertiser must reserve (hold) the full `bid` amount from their funds for up to the specified `hold_time`. This reservation guarantees payment to the offerer once the user action completes and the offerer submits a Payment Request.
+Upon sending this event, the delegate must reserve (hold) the full `bid` amount from their funds for up to the specified `hold_time`. This reservation guarantees payment to the offerer once the user action completes and the offerer submits a Payment Request.
 
 
-### Requesting a Payment 
-`(offerer → advertiser)`
+## Requesting a Payment 
+`(offerer → delegate)`
 
-Upon receiving an `accept_offer` negotiation event, the offerer’s application must begin delivering the ad or user interaction flow. Some actions (e.g., `conversion`) may require user input or external processes and could fail or timeout.
+Upon receiving an `accept_offer` negotiation event, the offerer’s application must begin showing the ad. 
 
-When the offerer has reason to believe the requested action has been successfully completed, it MUST publish a `payment_request` negotiation event with the following encrypted NIP‑44 content:
+*Some actions (e.g., `click`) may require user input or external processes and could fail or timeout.*
+
+When the offerer has reason to believe the requested action has been successfully completed, it must publish a `payment_request` negotiation event with the following encrypted NIP‑44 content:
 
 * **type**: `payment_request`
 * **message** (`required`): A human‑readable explanation of why the action is considered complete (e.g., “Ad displayed to user”, “User clicked link”, “Purchase confirmed”). This explanation can be evaluated by a human or an automated reviewer to determine whether the action was successfully completed.
@@ -312,20 +381,23 @@ When the offerer has reason to believe the requested action has been successfull
 The tags must include:
 
 * **d**: The event id of the offer 
-* **p**: The pubkey of the advertiser who made the bid.
+* **p**: The pubkey of the delegate for the bid.
 
-This event serves as a trigger for the advertiser to execute the payout.
+This event serves as a trigger for the delegate to execute the payout.
 
-### Payout event 
-`(advertiser → offerer)`
+## Payout event 
+`(delegate → offerer)`
 
-Triggered when the advertiser processes a **Payment Request**. Upon receiving a `payment_request` event, the advertiser may (optionally) verify the requested user action. The advertiser can choose to skip verification and proceed directly to payment if desired.
+Triggered when the delegate processes a **Payment Request**. 
 
-If the action is (or is assumed) successful, the advertiser must pay the agreed `bid` amount to the value in the `lud16` or `lud06` nip-01 metadata associated with the pubkey in the `y` tag of the **Offer** event, then publish a **Payout** event with the following encrypted NIP‑44 content:
+*Upon receiving a `payment_request` event, the delegate may (optionally) verify the requested user action. The delegate can choose to skip verification and proceed directly to payment if desired.*
+
+If the action is (or is assumed) successful, the delegate must pay the agreed `bid` amount, on behalf of the advertiser, to the value in the `lud16` or `lud06` nip-01 metadata associated with the pubkey of the application (specified in the `y` tag of the **Offer** event).
+
+Once the payment is confirmed, the delegate must publish a **Payout** event with the following encrypted NIP‑44 content:
 
 * **type**: `payout`
 * **message** (`required`): A natural-language description of the payment execution (e.g., “Paid to BOLT11 invoice”, “Paid via LNURL address”). This message can be evaluated by a human or automated reviewer.
-* **preimage** (`optional`): The preimage of the paid invoice, if applicable. This is used to prove that the payment was executed successfully.
 
 
 The tags must include:
@@ -333,13 +405,13 @@ The tags must include:
 * **d**: The event id of the offer 
 * **p**: The pubkey of the offerer who made the offer.
 
-If verification fails or payment cannot be executed, the advertiser should instead publish a [Bailing Event](#bailing-event) with a reason for rejection.
+If verification fails or payment cannot be executed, the delegate should instead publish a [Bailing Event](#bailing-or-cancelling-an-offer) with a reason for rejection.
 
 
 ### Bailing or cancelling an offer 
-`(advertiser → offerer || offerer → advertiser)`
+`(delegate → offerer || offerer → delegate)`
 
-Both the advertiser and the offerer can inform the other party that they intend to bail out or reject an offer by a negotiation event with the following encrypted NIP‑44 content:
+Both the delegate and the offerer can inform the other party that they intend to bail out or reject an offer by a negotiation event with the following encrypted NIP‑44 content:
 
 * **type**: `bail`
 * **message** (`required`): The reason for bailing out or cancelling the offer.
@@ -347,14 +419,14 @@ Both the advertiser and the offerer can inform the other party that they intend 
 The tags must include:
 
 * **d**: The event id of the offer to bail or cancel
-* **p**: The pubkey of the counterparty (offerer or advertiser) this event is directed to.
+* **p**: The pubkey of the counterparty (offerer or delegate) this event is directed to.
 
 The following default messages are recommended for use when bailing out of an offer:
 
 * `out_of_budget`: No remaining budget for ads.
 * `expired`: The bid or hold time has expired and the negotiation is no longer valid or not accepted.
-* `failed_payment`: The advertiser can't pay the invoice
-* `action_incomplete`: The advertiser did not detect successful completion of the user action on their end.
+* `failed_payment`: The delegate can't pay the invoice
+* `action_incomplete`: The delegate did not detect successful completion of the user action on their end.
 * `cancelled`: The offer was cancelled.
 * `unknown` : unknown reason for bailing out.
  
@@ -368,35 +440,144 @@ When an offer that was originally agreed upon is bailed, the counterparty may ch
 
 ### When the app cheats
 
-An application may falsely claim completion of user actions (e.g., reporting an ad view that never occurred). Advertisers should perform due diligence by:
+An application or offerer may falsely claim completion of user actions (e.g., reporting an ad view that never occurred). 
+
+Delegates can implement various strategies to mitigate fraud, such as:
 
 * Restricting bids to trusted offerers via the `p` tag.
-* Applying heuristic checks or third‑party audits to detect inconsistencies.
+* Applying heuristic checks, audits or various forms of tracking to detect inconsistencies or suspicious behavior.
 
-If an advertiser detects cheating, it may:
+If a delegate detects cheating, it may:
 
 * Ignore all future offers from the offending pubkey.
-* Impose a PoW challenge by raising the `difficulty` in outgoing negotiation events, requiring the offerer to commit computational work to continue interactions.
+* Impose a PoW challenge by raising the `difficulty` in outgoing negotiation events: requiring the offerer to commit computational work to continue interactions.
 
-### When the advertiser cheats
+### When the advertiser or delegate cheat
 
-An advertiser may fail to honor payments, claim `hold_time` has expired prematurely, or otherwise violate the protocol.
+An advertiser or delegate may fail to honor payments, claim `hold_time` has expired prematurely, or otherwise violate the protocol.
 
 If an offerer detects misbehavior, it may:
 
 * Reject bids from that advertiser pubkey permanently.
-* Impose a PoW challenge by raising the `difficulty` in outgoing negotiation events, requiring the advertiser to commit computational work to continue interactions.
+* Reject bids that are delegated to an untrusted delegate pubkey.
+* Impose a PoW challenge by raising the `difficulty` in outgoing negotiation events: requiring the delegate to commit computational work to continue interactions.
 
----
 
-Implementations should maintain local blacklists of repeat offenders and may share reputational data off‑protocol to enhance ecosystem trustworthiness.
+Implementations may maintain local blacklists of repeat offenders and may share reputational data off‑protocol to enhance ecosystem trustworthiness.
 
-THe Pow penalty PoW deters further misconduct while allowing honest parties to redeem themselves for issues that may have been caused by bugs or misconfigurations.
+The Pow penalty PoW deters further misconduct while allowing honest parties to redeem themselves for issues that may have been caused by bugs or misconfigurations.
 
 
 ## Tracking Actions
 
-To track which offer triggers a specific action, the advertiser can include a `$OFFER_ID` placeholder in the destination link. The offerer must replace this placeholder with the ID of the accepted offer event before displaying the ad. This enables the advertiser to correlate user actions with the specific offer that generated them.
+To track which offer triggers a specific action, the advertiser can include a `$OFFER_ID` placeholder in the destination link. The offerer must replace this placeholder with the ID of the accepted offer event before displaying the ad. This enables the server-side code to correlate user actions with the specific offer that generated them.
+
 
 eg. 
   `https://example.com/landing-page?track=$OFFER_ID`
+
+
+
+## Pseudo-code implementation
+
+### Advertiser Client
+
+```javascript
+function publishAd(
+  eventData,
+  delegatePubKey
+  nwcUrl,
+  dailyBudget,
+  advertiserPrivKey
+) {
+  const event = {
+    kind: 30100,
+    content: JSON.stringify(eventData),
+    tags: [
+      ["k", "click"],
+      ["m", "image/png"],
+      ["l", "en"],
+      ["y", appPubKey],
+      ["d", "ad_1234"],
+      ["f", "BTC1_000"],
+      ["s", "512x128"],
+      ["S", "4:1"],
+      ["D", delegatePubKey, nip44Encrypt(
+        JSON.stringify({ dailyBudget, nwc: nwcUrl }),
+        nip44ConversationKey(advertiserPrivKey, delegatePubKey)
+      )],
+      // .....
+    ]
+  };
+  signAndPublishToRelays(event);
+}
+```
+
+
+### Delegate Service
+
+```javascript
+function onNewBidToManage(bidEvent, delegatePrivKey) { 
+  const delegateTag = bidEvent.tag("D")?.[1];
+  if (delegatePubKey !== myPubKey) return; // not for me
+
+  const payload = delegateTag[2];
+  const decryptedPayload = nip44Decrypt(
+    payload,
+    nip44ConversationKey(delegatePrivKey, bidEvent.author)
+  );
+
+  manageBid(bidEvent)
+    .onOffer(offer=>{
+      if(checkIfBlackListed(offer.author)){
+        bail(offer, "blacklisted");
+      } else{
+        acceptOffer(offer);
+      }
+    })
+    .onPaymentRequest((offer, paymentRequest)=>{
+      if(offer.author != paymentRequest.author) throw "invalid";
+      const appPubkey = offer.tag("y");
+      const offererPubkey = offer.author;
+
+      if(!verifyActionCompleted(offer)) {
+        bail(offer, "action_incomplete");
+        punish(offererPubkey);
+        return;
+      }
+  
+      processPayment(offer, appPubkey, decryptedPayload);
+      confirmPayout(offer, offererPubkey);
+    })
+    .onBail((offer, reason)=>{
+      const offererPubkey = offer.author;
+      punish(offererPubkey);
+    });
+}
+```
+
+
+### User facing Application
+
+```javascript
+function discoverAndOffer(appPubKey) {
+  const bids = fetchEventsFromRelays(/*user filter*/);
+  sortBids(bids);
+  const bestBid = bids[0];
+  const advKey = generatePrivateKey();
+  const delegatePubkey = bestBid.tag("D")[0];
+  sendOffer(delegate, appPubkey)
+    .onAccept(offer=>{
+      displayAd(bestBid).onActionCompleted(()=>{
+        sendPaymentRequest(offer, delegatePubkey);
+      });
+    })
+    .onPayoutEvent((offer,payout)=>{
+      alert("Payout confirmed: "+payout.message);
+    })
+    .onBail((offer, reason)=>{
+      alert("Offer cancelled: "+reason);
+      punish(delegatePubkey);
+    });
+}
+```
