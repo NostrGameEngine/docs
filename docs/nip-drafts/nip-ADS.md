@@ -100,7 +100,6 @@ Specifies the content format of the ad payload. Supported types:
 
 * `image/png`: PNG image URL
 * `image/jpeg`: JPEG image URL
-* `image/gif`: GIF image URL
 * `text/plain`: Plain text content
 
 #### Category 
