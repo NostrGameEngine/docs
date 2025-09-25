@@ -111,7 +111,12 @@ Used when responding to a `type:connect`. Offering to connect to that peer.
         ["r", "<room id>"]
     ],
     "content": encrypt({
-        "candidates": ["<sdp>"],
+        "candidates": [
+            {
+                "candidate": "<sdp>",
+                "sdpMid": "<sdpMid>",
+            }        
+        ],
         ...misc
     })
 }
