@@ -1,4 +1,6 @@
-# NOSTR Ads Network
+# NIP-AD: Decentralized Advertising Protocol
+
+ 
 
 `draft` `optional`  `author:riccardobl` 
 
@@ -96,7 +98,7 @@ To reduce fraud or abuse, participants may impose a [Proof-of-Work penalty](#pun
 
 A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
 
-```json
+```yaml
 {
   "kind": 30100,
   "content": json({
@@ -127,7 +129,9 @@ A replaceable event (`kind:30100`) where an advertiser bids for ad placement.
     ["s", "<size>"],
     ["S", "<aspect ratio>"],
     ["D", "<delegate pubkey>", "<payload>"],
-    ["expiration", "<timestamp>"]
+    ["expiration", "<timestamp>"],
+    // ["r", "wss://relay.tld"],
+    // ["r", "wss://relay2.tld"]
   ]
 }
 ```
@@ -283,6 +287,11 @@ Delegates might automatically listen for biddings that have a matching `D` tag.
 (`expiration`) `optional`
 
 Unix timestamp (seconds) when bid expires.
+
+#### Relay hints 
+(`r`) `optional`
+
+One or more `r` tags serve as hints for the offerer on which relays to initiate the negotiation. Offerers may choose to ignore these hints and use their own relay selection strategy.
 
 
 ## Cancellation Event
