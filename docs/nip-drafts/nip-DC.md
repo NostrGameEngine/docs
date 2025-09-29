@@ -1,13 +1,13 @@
-NIP-DC: Direct Communication
+NIP-DC: Direct Connect
 ============================
 
-`draft` `optional`  `author:riccardobl`
+`draft` `optional`  `author:riccardobl` `author:jacany`
 
-This NIP describes a general purpose protocol to coordinate direct peer to peer connections using nostr relays.
+This NIP describes a general purpose way to coordinate direct peer to peer connections using nostr relays.
 
 ## Rooms
 
-Rooms are identified by a keypair that is shared off-protocol to all the parties interested in connecting together.
+Rooms are identified by a keypair that is shared to all the parties interested in connecting together.
 When a peer joins a room, everyone in the room should attempt to connect to them.
 
 ## Encryption
@@ -136,7 +136,7 @@ The answer event is used to respond to an offer.
 
 ### Data Channels (webrtc-dc)
 
-A protocol to share binary packets using WebRTC Data Channels.
+Binary packets via WebRTC Data Channels.
 
 #### webrtc-dc: Presence Event
 ```yaml
